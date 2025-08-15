@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  # Frontend service
+  frontend-service:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    restart: always
+
+  # Secure frontend instance (e.g., white-labeled client site)
+  secure-frontend-service:
+    build:
+      context: ./secure-frontend
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: production
+    restart: always
+
+  # Backend API service
+  backend-service:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    restart: always
+
+  # Redis cache (optional)
+  redis:
+    image: redis:7
+    volumes:
+      - redis-data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Reverse proxy
+  nginx:
+    image: nginx:latest
+    depends_on:
+      - frontend-service
+      - backend-service
+      - secure-frontend-service
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/hosts.conf:/etc/nginx/conf.d/hosts.conf
+      - ./nginx/certs:/etc/nginx/certs
+    restart: always
+
+volumes:
+  redis-data:
