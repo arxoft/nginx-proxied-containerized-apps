@@ -1,0 +1,1 @@
+# nginx-proxied-containerized-apps
